@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASD Evaluation - Prompt Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* Custom Checkbox Styling */
+        .cb-custom { width: 1.25rem; height: 1.25rem; accent-color: #4f46e5; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+    <div class="max-w-5xl mx-auto px-4 py-10">
+        
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl font-extrabold text-indigo-900 uppercase tracking-wider mb-2">ASD Evaluation Prompt Builder</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto italic">Generator instruksi analisis skenario observasi berbasis DSM-5 dan CARS-2.</p>
+        </header>
+
+        <section class="bg-white p-8 rounded-2xl shadow-lg border-t-8 border-indigo-600 mb-8">
+            
+            <div class="mb-6 border-b pb-6 border-gray-100">
+                <h2 class="font-bold text-lg text-indigo-800 mb-4">1. Data Input Anak</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Anak / Inisial</label>
+                        <input type="text" id="nama" placeholder="Contoh: Ananda B" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-gray-50 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Usia Anak</label>
+                        <input type="text" id="usia" placeholder="Contoh: 5 Tahun" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-gray-50 border">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6 border-b pb-6 border-gray-100">
+                <h2 class="font-bold text-lg text-indigo-800 mb-2">2. Skenario Observasi</h2>
+                <p class="text-xs text-gray-500 mb-4">Masukkan catatan perilaku atau skenario observasi yang ingin dinilai oleh AI.</p>
+                <textarea id="skenario" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-3 bg-gray-50 border" placeholder="Tempel catatan observasi perilaku anak di sini..."></textarea>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="font-bold text-lg text-indigo-800 mb-2">3. Fokus Penilaian (CARS-2)</h2>
+                <p class="text-xs text-gray-500 mb-4">Pilih satu atau lebih Aspek. Indikator spesifik akan muncul secara otomatis di bawahnya untuk Anda pilih.</p>
+                
+                <div class="bg-indigo-50 p-4 rounded-xl mb-4 border border-indigo-100">
+                    <h3 class="font-semibold text-indigo-900 mb-3 text-sm">Pilih Aspek:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="aspek-container">
+                        </div>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-xl border border-gray-200 hidden" id="indikator-wrapper">
+                    <h3 class="font-semibold text-gray-800 mb-3 text-sm">Pilih Indikator Spesifik:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="indikator-container">
+                        </div>
+                </div>
+            </div>
+
+            <button onclick="generatePrompt()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-lg">
+                Hasilkan Prompt Penilaian
+            </button>
+        </section>
+
+        <section id="output-section" class="hidden bg-gray-900 p-6 rounded-2xl shadow-lg relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-indigo-400 font-bold uppercase tracking-wider text-sm">Prompt Siap Salin:</h3>
+                <button onclick="copyToClipboard('display-prompt')" class="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded transition">
+                    SALIN PROMPT
+                </button>
+            </div>
+            <pre id="display-prompt" class="text-gray-300 text-sm whitespace-pre-wrap font-mono custom-scrollbar max-h-[500px] overflow-y-auto p-4 bg-gray-800 rounded-lg border border-gray-700"></pre>
+        </section>
+
+    </div>
+
+    <script>
+        // Data Pemetaan Aspek dan Indikator (CARS-2)
+        const aspeksData = {
+            "Social Interaction": ["1. Relating to People", "2. Imitation", "3. Emotional Response", "7. Visual Response", "8. Listening Response", "11. Verbal Communication", "12. Nonverbal Communication"],
+            "Communication": ["5. Object Use", "6. Adaptation to Change", "11. Verbal Communication", "12. Nonverbal Communication"],
+            "Restricted Patterns of Interest and Stereotyped Behavior": ["4. Body Use", "5. Object Use", "6. Adaptation to Change", "11. Verbal Communication", "13. Activity Level"],
+            "Sensory Issues and Associated Features": ["3. Emotional Response", "4. Body Use", "5. Object Use", "7. Visual Response", "8. Listening Response", "9. Taste, Smell, and Touch Response and Use", "10. Fear or Nervousness", "13. Activity Level"],
+            "Thinking Style and Cognitive Issues": ["1. Relating to People", "2. Imitation", "7. Visual Response", "10. Fear or Nervousness", "14. Level and Consistency of Intellectual Response"]
+        };
+
+        // Inisialisasi Checkbox Aspek
+        const aspekContainer = document.getElementById('aspek-container');
+        Object.keys(aspeksData).forEach(aspek => {
+            const label = document.createElement('label');
+            label.className = "flex items-start gap-2 cursor-pointer";
+            label.innerHTML = `
+                <input type="checkbox" value="${aspek}" class="cb-custom mt-0.5" onchange="updateIndikators()">
+                <span class="text-sm text-gray-700 font-medium">${aspek}</span>
+            `;
+            aspekContainer.appendChild(label);
+        });
+
+        // Update Checkbox Indikator Berdasarkan Aspek
+        function updateIndikators() {
+            const checkedAspeks = Array.from(document.querySelectorAll('#aspek-container input:checked')).map(cb => cb.value);
+            const indikatorContainer = document.getElementById('indikator-container');
+            const indikatorWrapper = document.getElementById('indikator-wrapper');
+            
+            indikatorContainer.innerHTML = ''; // Kosongkan indikator sebelumnya
+
+            if (checkedAspeks.length === 0) {
+                indikatorWrapper.classList.add('hidden');
+                return;
+            }
+
+            indikatorWrapper.classList.remove('hidden');
+
+            // Menggunakan Set untuk menghindari duplikasi indikator
+            let uniqueIndikators = new Set();
+            checkedAspeks.forEach(aspek => {
+                aspeksData[aspek].forEach(ind => uniqueIndikators.add(ind));
+            });
+
+            // Urutkan indikator berdasarkan angka depannya
+            const sortedIndikators = Array.from(uniqueIndikators).sort((a, b) => {
+                return parseInt(a) - parseInt(b);
+            });
+
+            sortedIndikators.forEach(ind => {
+                const label = document.createElement('label');
+                label.className = "flex items-start gap-2 cursor-pointer";
+                label.innerHTML = `
+                    <input type="checkbox" value="${ind}" class="cb-custom mt-0.5 cb-indikator">
+                    <span class="text-sm text-gray-700">${ind}</span>
+                `;
+                indikatorContainer.appendChild(label);
+            });
+        }
+
+        // Copy to Clipboard
+        function copyToClipboard(id) {
+            const text = document.getElementById(id).innerText;
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert('Prompt berhasil disalin! Tempelkan ke ChatGPT/Gemini.');
+        }
+
+        // Generate Final Prompt
+        function generatePrompt() {
+            const nama = document.getElementById('nama').value || "[NAMA ANAK]";
+            const usia = document.getElementById('usia').value || "[USIA ANAK]";
+            const skenario = document.getElementById('skenario').value || "[TIDAK ADA SKENARIO DIBERIKAN]";
+            
+            const checkedAspeks = Array.from(document.querySelectorAll('#aspek-container input:checked')).map(cb => cb.value);
+            const checkedIndikators = Array.from(document.querySelectorAll('.cb-indikator:checked')).map(cb => cb.value);
+
+            if (checkedAspeks.length === 0 || checkedIndikators.length === 0) {
+                alert("Harap pilih minimal 1 Aspek dan 1 Indikator Spesifik!");
+                return;
+            }
+
+            const promptText = `[ROLE]
+Anda adalah terapis ASD profesional.
+
+[DATA INPUT]
+Identitas Anak:
+Nama: ${nama}
+Usia: ${usia}
+Catatan perilaku singkat:
+"${skenario}"
+
+[FOKUS EVALUASI]
+Berdasarkan instrumen DSM-5 dan CARS-2, fokuskan penilaian Anda HANYA pada parameter berikut yang telah diidentifikasi:
+* Aspek Utama: ${checkedAspeks.join(', ')}
+* Indikator Spesifik: ${checkedIndikators.join(', ')}
+
+[TUGAS]
+Lakukan analisis mendalam terhadap catatan perilaku di atas dan susun laporan dengan struktur berikut:
+
+1. Indikator Perilaku Utama: Berikan analisis bagaimana indikator spesifik yang dipilih tercermin dalam skenario.
+2. Penentuan Kategori ASD: Tentukan estimasi skor dan kategori keparahan (Berdasarkan DSM-5 dan item dominan CARS-2 yang dipilih).
+3. Interpretasi Naratif: Buat interpretasi dari pola perilaku yang muncul.
+4. Identifikasi Kekuatan & Kelemahan: Gunakan pendekatan berbasis kekuatan (strength-based approach).
+5. Kesimpulan Klinis.
+6. Rekomendasi: Berikan saran intervensi dalam bentuk tabel.
+
+[OUTPUT]
+Gunakan format laporan CARS-2 lengkap seperti poin-poin Tugas di atas dengan bahasa klinis yang profesional dan terstruktur.`;
+
+            document.getElementById('display-prompt').innerText = promptText;
+            document.getElementById('output-section').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
