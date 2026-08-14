@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASD Evaluation - Prompt Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ============================================
+           CUSTOM SCROLLBAR STYLING
+           ============================================ */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* ============================================
+           CHECKBOX STYLING
+           ============================================ */
+        .checkbox-custom {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: #4f46e5;
+            cursor: pointer;
+        }
+
+        /* ============================================
+           RATING BUTTON STYLING
+           ============================================ */
+        .rating-button {
+            width: 2.5rem;
+            height: 2.5rem;
+            padding: 0.25rem;
+            margin: 0 0.25rem;
+            border: 2px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .rating-button:hover {
+            border-color: #4f46e5;
+            background-color: #f3f4f6;
+        }
+
+        .rating-button.active {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="max-w-5xl mx-auto px-4 py-10">
+        
+        <!-- ========== HEADER ========== -->
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl font-extrabold text-indigo-900 uppercase tracking-wider mb-2">
+                ASD Evaluation Prompt Builder
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto italic">
+                Generator instruksi analisis skenario observasi berbasis DSM-5 dan CARS-2
+            </p>
+        </header>
+
+        <!-- ========== INTRODUCTION SECTION ========== -->
+        <div class="mb-8 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
+            <h2 class="text-lg font-semibold text-blue-900 mb-2">Tentang Tool Ini</h2>
+            <p class="text-blue-800 text-sm leading-relaxed">
+                Tool ini membantu Anda menghasilkan prompt analisis perilaku anak berdasarkan kriteria DSM-5 dan instrumen CARS-2 (Childhood Autism Rating Scale, 2nd edition). 
+                Masukkan data anak, deskripsi perilaku yang diamati, pilih aspek yang relevan, dan berikan rating untuk setiap indikator. 
+                Sistem akan menghasilkan prompt siap pakai yang dapat langsung dikirimkan ke ChatGPT atau Gemini untuk analisis mendalam.
+            </p>
+        </div>
+
+        <!-- ========== MAIN FORM SECTION ========== -->
+        <section class="bg-white p-8 rounded-2xl shadow-lg border-t-8 border-indigo-600 mb-8">
+            
+            <!-- ===== SECTION 1: CHILD DATA INPUT ===== -->
+            <div class="mb-6 border-b pb-6 border-gray-100">
+                <h2 class="font-bold text-lg text-indigo-800 mb-4">
+                    1. Data Input Anak
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Child Name Input -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Nama Anak / Inisial
+                        </label>
+                        <input 
+                            type="text" 
+                            id="inputNama" 
+                            placeholder="Contoh: Ananda B" 
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-gray-50 border"
+                        >
+                    </div>
+
+                    <!-- Child Age Input -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Usia Anak
+                        </label>
+                        <input 
+                            type="text" 
+                            id="inputUsia" 
+                            placeholder="Contoh: 5 Tahun" 
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-gray-50 border"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== SECTION 2: OBSERVATION SCENARIO ===== -->
+            <div class="mb-6 border-b pb-6 border-gray-100">
+                <h2 class="font-bold text-lg text-indigo-800 mb-2">
+                    2. Skenario Observasi
+                </h2>
+                <p class="text-xs text-gray-500 mb-4">
+                    Masukkan catatan perilaku atau skenario observasi yang ingin dinilai oleh AI.
+                </p>
+                <textarea 
+                    id="inputSkenario" 
+                    rows="4" 
+                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-3 bg-gray-50 border" 
+                    placeholder="Tempel catatan observasi perilaku anak di sini..."
+                ></textarea>
+            </div>
+
+            <!-- ===== SECTION 3: ASSESSMENT FOCUS (CARS-2) ===== -->
+            <div class="mb-8">
+                <h2 class="font-bold text-lg text-indigo-800 mb-2">
+                    3. Fokus Penilaian (CARS-2)
+                </h2>
+                <p class="text-xs text-gray-500 mb-4">
+                    Pilih satu atau lebih Aspek. Indikator spesifik akan muncul secara otomatis di bawahnya untuk Anda pilih.
+                </p>
+
+                <!-- Aspects Selection Container -->
+                <div class="bg-indigo-50 p-4 rounded-xl mb-4 border border-indigo-100">
+                    <h3 class="font-semibold text-indigo-900 mb-3 text-sm">
+                        Pilih Aspek:
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="containerAspek">
+                        <!-- Checkbox aspek akan ditambahkan oleh JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Indicators Selection Container -->
+                <div class="bg-gray-100 p-4 rounded-xl border border-gray-200 hidden" id="wrapperIndikator">
+                    <h3 class="font-semibold text-gray-800 mb-3 text-sm">
+                        Pilih Indikator Spesifik & Berikan Skor:
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="containerIndikator">
+                        <!-- Indikator dengan rating buttons akan ditambahkan oleh JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+                onclick="handleGeneratePrompt()" 
+                class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-lg"
+            >
+                Hasilkan Prompt Penilaian
+            </button>
+        </section>
+
+        <!-- ========== OUTPUT SECTION ========== -->
+        <section id="sectionOutput" class="hidden bg-gray-900 p-6 rounded-2xl shadow-lg relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-indigo-400 font-bold uppercase tracking-wider text-sm">
+                    Prompt Siap Salin:
+                </h3>
+                <button 
+                    onclick="handleCopyPrompt('displayPrompt')" 
+                    class="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded transition"
+                >
+                    SALIN PROMPT
+                </button>
+            </div>
+            <pre 
+                id="displayPrompt" 
+                class="text-gray-300 text-sm whitespace-pre-wrap font-mono custom-scrollbar max-h-[500px] overflow-y-auto p-4 bg-gray-800 rounded-lg border border-gray-700"
+            ></pre>
+        </section>
+
+    </div>
+
+    <script>
+        /* ============================================
+           DATA CONFIGURATION
+           ============================================ */
+
+        /**
+         * CARS-2 Assessment Data
+         * Pemetaan antara Aspek utama dengan Indikator spesifik
+         */
+        const CARS2_DATA = {
+            "Social Interaction": [
+                "1. Relating to People",
+                "2. Imitation",
+                "3. Emotional Response",
+                "7. Visual Response",
+                "8. Listening Response",
+                "11. Verbal Communication",
+                "12. Nonverbal Communication"
+            ],
+            "Communication": [
+                "5. Object Use",
+                "6. Adaptation to Change",
+                "11. Verbal Communication",
+                "12. Nonverbal Communication"
+            ],
+            "Restricted Patterns of Interest and Stereotyped Behavior": [
+                "4. Body Use",
+                "5. Object Use",
+                "6. Adaptation to Change",
+                "11. Verbal Communication",
+                "13. Activity Level"
+            ],
+            "Sensory Issues and Associated Features": [
+                "3. Emotional Response",
+                "4. Body Use",
+                "5. Object Use",
+                "7. Visual Response",
+                "8. Listening Response",
+                "9. Taste, Smell, and Touch Response and Use",
+                "10. Fear or Nervousness",
+                "13. Activity Level"
+            ],
+            "Thinking Style and Cognitive Issues": [
+                "1. Relating to People",
+                "2. Imitation",
+                "7. Visual Response",
+                "10. Fear or Nervousness",
+                "14. Level and Consistency of Intellectual Response"
+            ]
+        };
+
+        /* ============================================
+           STATE MANAGEMENT
+           ============================================ */
+
+        // Menyimpan rating (skor 1-4) untuk setiap indikator
+        let indikatorRatingsMap = {};
+
+        /* ============================================
+           INITIALIZATION
+           ============================================ */
+
+        /**
+         * Initialize form dengan membuat checkbox untuk setiap aspek
+         */
+        function initializeAspectCheckboxes() {
+            const containerAspek = document.getElementById('containerAspek');
+            
+            // Iterasi setiap aspek dalam CARS2_DATA
+            Object.keys(CARS2_DATA).forEach(aspekName => {
+                const labelElement = document.createElement('label');
+                labelElement.className = "flex items-start gap-2 cursor-pointer";
+                labelElement.innerHTML = `
+                    <input 
+                        type="checkbox" 
+                        value="${aspekName}" 
+                        class="checkbox-custom mt-0.5" 
+                        onchange="handleAspectChange()"
+                    >
+                    <span class="text-sm text-gray-700 font-medium">
+                        ${aspekName}
+                    </span>
+                `;
+                containerAspek.appendChild(labelElement);
+            });
+        }
+
+        // Jalankan inisialisasi saat page load
+        document.addEventListener('DOMContentLoaded', initializeAspectCheckboxes);
+
+        /* ============================================
+           EVENT HANDLERS
+           ============================================ */
+
+        /**
+         * Handle perubahan seleksi aspek
+         * Menampilkan/menyembunyikan indikator dan memperbarui daftar indikator
+         */
+        function handleAspectChange() {
+            // Ambil semua aspek yang dipilih
+            const selectedAspects = getSelectedAspects();
+            const containerIndikator = document.getElementById('containerIndikator');
+            const wrapperIndikator = document.getElementById('wrapperIndikator');
+
+            // Clear indikator container
+            containerIndikator.innerHTML = '';
+
+            // Jika tidak ada aspek yang dipilih, sembunyikan section indikator
+            if (selectedAspects.length === 0) {
+                wrapperIndikator.classList.add('hidden');
+                return;
+            }
+
+            // Tampilkan section indikator
+            wrapperIndikator.classList.remove('hidden');
+
+            // Ambil semua indikator unik dari aspek yang dipilih
+            const uniqueIndicators = getUniqueIndicators(selectedAspects);
+            
+            // Render setiap indikator dengan rating buttons
+            uniqueIndicators.forEach(indicator => {
+                renderIndicatorWithRating(containerIndikator, indicator);
+            });
+        }
+
+        /**
+         * Handle klik pada rating button
+         * Menyimpan rating dan update visual state
+         */
+        function handleSetRating(indicatorName, scoreValue) {
+            // Simpan rating ke state
+            indikatorRatingsMap[indicatorName] = scoreValue;
+
+            // Update visual state dari semua rating buttons untuk indikator ini
+            document.querySelectorAll(`button[data-indicator="${indicatorName}"]`).forEach(button => {
+                button.classList.remove('active');
+                if (parseInt(button.dataset.score) === scoreValue) {
+                    button.classList.add('active');
+                }
+            });
+        }
+
+        /**
+         * Handle copy prompt ke clipboard
+         */
+        function handleCopyPrompt(elementId) {
+            const promptText = document.getElementById(elementId).innerText;
+            
+            // Create temporary textarea element
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = promptText;
+            document.body.appendChild(tempTextarea);
+            
+            // Select dan copy
+            tempTextarea.select();
+            document.execCommand('copy');
+            
+            // Remove temporary element
+            document.body.removeChild(tempTextarea);
+            
+            // Show success message
+            alert('Prompt berhasil disalin! Tempelkan ke ChatGPT/Gemini.');
+        }
+
+        /**
+         * Handle generate prompt
+         * Validasi input, ambil data, dan generate prompt untuk AI
+         */
+        function handleGeneratePrompt() {
+            // Ambil input dari form
+            const childName = document.getElementById('inputNama').value || "[NAMA ANAK]";
+            const childAge = document.getElementById('inputUsia').value || "[USIA ANAK]";
+            const observationScenario = document.getElementById('inputSkenario').value || "[TIDAK ADA SKENARIO DIBERIKAN]";
+
+            // Validasi: Minimal harus ada 1 aspek yang dipilih
+            const selectedAspects = getSelectedAspects();
+            if (selectedAspects.length === 0) {
+                alert("Harap pilih minimal 1 Aspek!");
+                return;
+            }
+
+            // Validasi: Minimal harus ada 1 indikator dengan rating > 0
+            const indicatorsWithRating = Object.keys(indikatorRatingsMap).filter(
+                indicator => indikatorRatingsMap[indicator] > 0
+            );
+
+            if (indicatorsWithRating.length === 0) {
+                alert("Harap berikan rating (1-4) untuk minimal 1 Indikator!");
+                return;
+            }
+
+            // Format indikator dengan rating
+            const indicatorRatingText = indicatorsWithRating
+                .map(indicator => `${indicator} [Skor: ${indikatorRatingsMap[indicator]}/4]`)
+                .join('\n');
+
+            // Buat prompt untuk AI
+            const aiPrompt = buildAIPrompt(
+                childName,
+                childAge,
+                observationScenario,
+                selectedAspects,
+                indicatorRatingText
+            );
+
+            // Tampilkan hasil ke output section
+            displayPromptOutput(aiPrompt);
+        }
+
+        /* ============================================
+           UTILITY FUNCTIONS
+           ============================================ */
+
+        /**
+         * Ambil semua aspek yang dipilih
+         * @returns {Array<string>} Array nama aspek yang dipilih
+         */
+        function getSelectedAspects() {
+            return Array.from(document.querySelectorAll('#containerAspek input:checked'))
+                .map(checkbox => checkbox.value);
+        }
+
+        /**
+         * Ambil semua indikator unik dari aspek yang dipilih
+         * @param {Array<string>} selectedAspects - Array aspek yang dipilih
+         * @returns {Array<string>} Array indikator unik yang sudah diurutkan
+         */
+        function getUniqueIndicators(selectedAspects) {
+            // Gunakan Set untuk menghindari duplikasi
+            const uniqueSet = new Set();
+
+            selectedAspects.forEach(aspect => {
+                CARS2_DATA[aspect].forEach(indicator => {
+                    uniqueSet.add(indicator);
+                });
+            });
+
+            // Konversi ke array dan urutkan berdasarkan nomor urut
+            return Array.from(uniqueSet).sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)[0]);
+                const numB = parseInt(b.match(/\d+/)[0]);
+                return numA - numB;
+            });
+        }
+
+        /**
+         * Render indikator dengan rating buttons
+         * @param {HTMLElement} container - Element container untuk render
+         * @param {string} indicator - Nama indikator
+         */
+        function renderIndicatorWithRating(container, indicator) {
+            const currentRating = indikatorRatingsMap[indicator] || 0;
+
+            const labelElement = document.createElement('label');
+            labelElement.className = "flex items-center justify-between gap-3 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200";
+
+            // Buat rating buttons HTML
+            const ratingButtonsHTML = [1, 2, 3, 4]
+                .map(score => `
+                    <button 
+                        type="button" 
+                        class="rating-button ${currentRating === score ? 'active' : ''}" 
+                        data-indicator="${indicator}" 
+                        data-score="${score}" 
+                        onclick="handleSetRating('${indicator}', ${score}); event.preventDefault();"
+                    >
+                        ${score}
+                    </button>
+                `)
+                .join('');
+
+            labelElement.innerHTML = `
+                <span class="text-sm text-gray-700 font-medium flex-1">
+                    ${indicator}
+                </span>
+                <div class="flex gap-1">
+                    ${ratingButtonsHTML}
+                </div>
+            `;
+
+            container.appendChild(labelElement);
+        }
+
+        /**
+         * Build prompt untuk dikirim ke AI
+         * @param {string} childName - Nama anak
+         * @param {string} childAge - Usia anak
+         * @param {string} scenario - Skenario observasi
+         * @param {Array<string>} aspects - Aspek yang dipilih
+         * @param {string} indicators - Indikator dengan rating
+         * @returns {string} Prompt text untuk AI
+         */
+        function buildAIPrompt(childName, childAge, scenario, aspects, indicators) {
+            return `[ROLE]
+Anda adalah terapis ASD profesional.
+
+[DATA INPUT]
+Identitas Anak:
+Nama: ${childName}
+Usia: ${childAge}
+Catatan perilaku singkat:
+"${scenario}"
+
+[FOKUS EVALUASI]
+Berdasarkan instrumen DSM-5 dan CARS-2, fokuskan penilaian Anda HANYA pada parameter berikut yang telah diidentifikasi:
+* Aspek Utama: ${aspects.join(', ')}
+* Indikator Spesifik dengan Rating Sementara:
+${indicators}
+
+[TUGAS]
+Lakukan analisis mendalam terhadap catatan perilaku di atas dan susun laporan dengan struktur berikut:
+
+1. Indikator Perilaku Utama: Berikan analisis bagaimana indikator spesifik yang dipilih tercermin dalam skenario, termasuk rating yang diberikan.
+2. Penentuan Kategori ASD: Tentukan estimasi skor dan kategori keparahan (Berdasarkan DSM-5 dan item dominan CARS-2 yang dipilih).
+3. Interpretasi Naratif: Buat interpretasi dari pola perilaku yang muncul.
+4. Identifikasi Kekuatan & Kelemahan: Gunakan pendekatan berbasis kekuatan (strength-based approach).
+5. Kesimpulan Klinis.
+6. Rekomendasi: Berikan saran intervensi dalam bentuk tabel.
+
+[OUTPUT]
+Gunakan format laporan CARS-2 lengkap seperti poin-poin Tugas di atas dengan bahasa klinis yang profesional dan terstruktur.`;
+        }
+
+        /**
+         * Tampilkan prompt di output section
+         * @param {string} promptText - Teks prompt yang akan ditampilkan
+         */
+        function displayPromptOutput(promptText) {
+            document.getElementById('displayPrompt').innerText = promptText;
+            document.getElementById('sectionOutput').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
