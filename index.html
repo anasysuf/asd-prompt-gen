@@ -100,26 +100,28 @@
                     <!-- Child Name Input -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Nama Anak / Inisial
+                            Nama Anak / Inisial <span class="text-red-600">*</span>
                         </label>
                         <input 
                             type="text" 
                             id="inputNama" 
                             placeholder="Contoh: Ananda B" 
                             class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-gray-50 border"
+                            required
                         >
                     </div>
 
                     <!-- Child Age Input -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Usia Anak
+                            Usia Anak <span class="text-red-600">*</span>
                         </label>
                         <input 
                             type="text" 
                             id="inputUsia" 
                             placeholder="Contoh: 5 Tahun" 
                             class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 bg-gray-50 border"
+                            required
                         >
                     </div>
                 </div>
@@ -128,7 +130,7 @@
             <!-- ===== SECTION 2: OBSERVATION SCENARIO ===== -->
             <div class="mb-6 border-b pb-6 border-gray-100">
                 <h2 class="font-bold text-lg text-indigo-800 mb-2">
-                    2. Skenario Observasi
+                    2. Skenario Observasi <span class="text-red-600">*</span>
                 </h2>
                 <p class="text-xs text-gray-500 mb-4">
                     Masukkan catatan perilaku atau skenario observasi yang ingin dinilai oleh AI.
@@ -138,6 +140,7 @@
                     rows="4" 
                     class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-3 bg-gray-50 border" 
                     placeholder="Tempel catatan observasi perilaku anak di sini..."
+                    required
                 ></textarea>
             </div>
 
@@ -329,15 +332,21 @@
         /**
          * Handle klik pada rating button
          * Menyimpan rating dan update visual state
+         * Jika klik angka yang sudah dipilih, maka akan di-reset ke 0
          */
         function handleSetRating(indicatorName, scoreValue) {
-            // Simpan rating ke state
-            indikatorRatingsMap[indicatorName] = scoreValue;
+            // Jika angka yang di-klik sudah dipilih, hapus pilihan (toggle)
+            if (indikatorRatingsMap[indicatorName] === scoreValue) {
+                indikatorRatingsMap[indicatorName] = 0;
+            } else {
+                // Simpan rating ke state
+                indikatorRatingsMap[indicatorName] = scoreValue;
+            }
 
             // Update visual state dari semua rating buttons untuk indikator ini
             document.querySelectorAll(`button[data-indicator="${indicatorName}"]`).forEach(button => {
                 button.classList.remove('active');
-                if (parseInt(button.dataset.score) === scoreValue) {
+                if (parseInt(button.dataset.score) === indikatorRatingsMap[indicatorName]) {
                     button.classList.add('active');
                 }
             });
@@ -371,9 +380,27 @@
          */
         function handleGeneratePrompt() {
             // Ambil input dari form
-            const childName = document.getElementById('inputNama').value || "[NAMA ANAK]";
-            const childAge = document.getElementById('inputUsia').value || "[USIA ANAK]";
-            const observationScenario = document.getElementById('inputSkenario').value || "[TIDAK ADA SKENARIO DIBERIKAN]";
+            const childName = document.getElementById('inputNama').value.trim();
+            const childAge = document.getElementById('inputUsia').value.trim();
+            const observationScenario = document.getElementById('inputSkenario').value.trim();
+
+            // Validasi: Nama anak wajib diisi
+            if (!childName) {
+                alert("Harap isi Nama Anak / Inisial!");
+                return;
+            }
+
+            // Validasi: Usia anak wajib diisi
+            if (!childAge) {
+                alert("Harap isi Usia Anak!");
+                return;
+            }
+
+            // Validasi: Skenario observasi wajib diisi
+            if (!observationScenario) {
+                alert("Harap isi Skenario Observasi!");
+                return;
+            }
 
             // Validasi: Minimal harus ada 1 aspek yang dipilih
             const selectedAspects = getSelectedAspects();
@@ -382,9 +409,9 @@
                 return;
             }
 
-            // Validasi: Minimal harus ada 1 indikator dengan rating > 0
+            // Validasi: Minimal harus ada 1 indikator dengan rating 1-4 (bukan 0)
             const indicatorsWithRating = Object.keys(indikatorRatingsMap).filter(
-                indicator => indikatorRatingsMap[indicator] > 0
+                indicator => indikatorRatingsMap[indicator] > 0 && indikatorRatingsMap[indicator] <= 4
             );
 
             if (indicatorsWithRating.length === 0) {
@@ -457,7 +484,7 @@
             const labelElement = document.createElement('label');
             labelElement.className = "flex items-center justify-between gap-3 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200";
 
-            // Buat rating buttons HTML
+            // Buat rating buttons HTML (1-4)
             const ratingButtonsHTML = [1, 2, 3, 4]
                 .map(score => `
                     <button 
@@ -466,6 +493,7 @@
                         data-indicator="${indicator}" 
                         data-score="${score}" 
                         onclick="handleSetRating('${indicator}', ${score}); event.preventDefault();"
+                        title="Klik lagi untuk menghapus pilihan"
                     >
                         ${score}
                     </button>
